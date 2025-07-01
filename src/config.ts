@@ -1,0 +1,1 @@
+export const api = (endpoint: "employees" | "orgUnits" | "tickets") => `http://localhost:5282/${endpoint}`
