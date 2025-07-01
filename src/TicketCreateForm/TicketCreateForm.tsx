@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEventHandler } from 'react'
 import { useQuery } from 'react-query'
-import { Autocomplete, Box, Button, CircularProgress, MenuItem, TextField } from '@mui/material'
+import { Autocomplete, Box, Button, Chip, CircularProgress, darken, lighten, MenuItem, styled, TextField } from '@mui/material'
 
 import type { Employee, OrganizationNode } from './types'
 import { ErrorMessage } from './ErrorMessage';
@@ -14,6 +14,21 @@ export function TicketCreateForm() {
     </>
   );
 }
+
+const GroupHeader = styled('div')(({ theme }) => ({
+  position: 'sticky',
+  top: '-8px',
+  padding: '4px 10px',
+  color: theme.palette.primary.main,
+  backgroundColor: lighten(theme.palette.primary.light, 0.85),
+  ...theme.applyStyles('dark', {
+    backgroundColor: darken(theme.palette.primary.main, 0.8),
+  }),
+}));
+
+const GroupItems = styled('ul')({
+  padding: 0,
+});
 
 function Form() {
 
@@ -95,6 +110,8 @@ function Form() {
     setIsSaving(false);
   }, [ownerId, name, employeesIds, organizationNodeIds]);
 
+  const [selectedOrgs, setSelectedOrgs] = useState<string[]>([]);
+
   if (employees.isError) {
     return <ErrorMessage text="Chyba při stažení zaměstnanců." onClick={() => { employees.refetch(); }} />
   }
@@ -165,6 +182,47 @@ function Form() {
           onChange={(_, value) => {
             setEmployeesIds(value.map(x => x.personalNumber))
           }}
+          renderGroup={(params) => (
+            <li key={params.key}>
+              <GroupHeader>
+                {params.group}
+                <input
+                  type="checkbox"
+                  checked={selectedOrgs.includes(params.group)}
+                  onClick={() => {
+                    if (selectedOrgs.includes(params.group)) {
+                      setSelectedOrgs(selectedOrgs.filter(x => x != params.group));
+                    } else {
+                      setSelectedOrgs([...selectedOrgs, params.group]);
+                    }
+                  }} />
+              </GroupHeader>
+              <GroupItems>{params.children}</GroupItems>
+            </li>
+          )}
+          renderValue={(value, getItemProps) => {
+
+            // @todo arrow keys to select items
+
+            return ([
+              ...value.map((option, index) => {
+                const { key, ...itemProps } = getItemProps({ index: index });
+                return (
+                  <Chip variant="outlined" label={option.name} key={key}  {...itemProps} />
+                );
+              }),
+              // These can't be first, because MUI uses index to delete options.
+              ...selectedOrgs.map((orgName, index) => {
+                const { key, ...itemProps } = getItemProps({ index: index + value.length });
+                return (
+                  <Chip variant="outlined" label={orgName} key={key}  {...itemProps} onDelete={(event) => {
+                    setSelectedOrgs(selectedOrgs.filter(x => x != orgName));
+                  }}/>
+                );
+              }),
+            ]);
+          }}
+          //   <>{value.map(x=>x.name).join(',')}<Chip label={'value'} /> ... {selectedOrgs.join(';')}</>
         />
 
         <Autocomplete
