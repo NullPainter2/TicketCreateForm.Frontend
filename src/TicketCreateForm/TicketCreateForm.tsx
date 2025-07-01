@@ -176,7 +176,7 @@ function Form() {
           )}
           multiple
           disableCloseOnSelect
-          options={orgUnits.data || []}
+          options={[...(orgUnits.data || []).sort((a, b) => a.name.localeCompare(b.name))]}
           getOptionLabel={(option) => option.name}
           onChange={(_, value) => {
             setOrganizationNodeIds(value.map(x => x.id))
