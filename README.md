@@ -1,3 +1,5 @@
+Bootstrapped from bun's vite template. 
+
 # Installation & Running
 
 ```
