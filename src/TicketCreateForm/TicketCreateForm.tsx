@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEventHandler } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEventHandler } from 'react'
 import { useQuery } from 'react-query'
 import { Autocomplete, Box, Button, CircularProgress, MenuItem, TextField } from '@mui/material'
 
@@ -52,10 +52,18 @@ function Form() {
     setIsValid(!ticketNameHasError);
   }, [ticketNameHasError]);
 
-  useEffect(() => {
-    if (orgUnits.isFetched && orgUnits.isFetched) {
+  const employeesData = useMemo(() => [...(employees.data || [])].sort((a, b) => {
+    const aName: string = a.organizationNode?.name || "";
+    const bName: string = b.organizationNode?.name || "";
+    const groupResult: number = aName.localeCompare(bName);
+    if (groupResult == 0) {
+      return a.name.localeCompare(b.name);
+    } else {
+      return groupResult
     }
-  }, [orgUnits.data, orgUnits.data])
+  }), [employees.data]);
+
+  const orgUnitsData = useMemo(() => [...(orgUnits.data || []).sort((a, b) => a.name.localeCompare(b.name))], [orgUnits.data]);
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(async (event) => {
 
@@ -150,16 +158,7 @@ function Form() {
           )}
           multiple
           disableCloseOnSelect
-          options={[...(employees.data || [])].sort((a, b) => {
-            const aName: string = a.organizationNode?.name || "";
-            const bName: string = b.organizationNode?.name || "";
-            const groupResult: number = aName.localeCompare(bName);
-            if (groupResult == 0) {
-              return a.name.localeCompare(b.name);
-            } else {
-              return groupResult
-            }
-          })}
+          options={employeesData}
           groupBy={(option) => option.organizationNode?.name || ''}
           getOptionLabel={(option) => option.name}
           onChange={(_, value) => {
@@ -176,7 +175,7 @@ function Form() {
           )}
           multiple
           disableCloseOnSelect
-          options={[...(orgUnits.data || []).sort((a, b) => a.name.localeCompare(b.name))]}
+          options={orgUnitsData}
           getOptionLabel={(option) => option.name}
           onChange={(_, value) => {
             setOrganizationNodeIds(value.map(x => x.id))
